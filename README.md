@@ -1,86 +1,329 @@
-## Compose sample application
+# Panchito
 
-### Use with Docker Development Environments
+**A modern Python ETL service for ingesting, normalizing, and serving real estate data**
 
-You can open this sample in the Dev Environments feature of Docker Desktop version 4.12 or later.
+Panchito is a Flask-based data ingestion and API service that serves as a "Pressure App" within the ZaveStudios ecosystem. It demonstrates production-ready Python development patterns including async task processing, data validation, and RESTful API design.
 
-[Open in Docker Dev Environments <img src="../open_in_new.svg" alt="Open in Docker Dev Environments" align="top"/>](https://open.docker.com/dashboard/dev-envs?url=https://github.com/docker/awesome-compose/tree/master/nginx-flask-mysql)
+## Purpose
 
-### Python/Flask with Nginx proxy and MySQL database
+Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/eckslopez/thehouseguy) (Rails app) via REST API. It's designed to:
 
-Project structure:
-```
-.
-├── compose.yaml
-├── flask
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── server.py
-└── nginx
-    └── nginx.conf
+- Ingest data from multiple sources (CSV datasets, APIs, future: CRMLS)
+- Validate and normalize real estate listings
+- Process data asynchronously using Celery
+- Expose clean, paginated REST endpoints
+- Force platform concerns: async queues, ETL patterns, polyglot CI/CD
 
-```
+> **Note:** This is a learning and portfolio project focused on demonstrating platform engineering skills through practical application development.
 
-[_compose.yaml_](compose.yaml)
-```
-services:
-  backend:
-    build:
-      context: backend
-      target: builder
-    ...
-  db:
-    # We use a mariadb image which supports both amd64 & arm64 architecture
-    image: mariadb:10-focal
-    # If you really want to use MySQL, uncomment the following line
-    #image: mysql:8
-    ...
-  proxy:
-    build: proxy
-    ...
-```
-The compose file defines an application with three services `proxy`, `backend` and `db`.
-When deploying the application, docker compose maps port 80 of the proxy service container to port 80 of the host as specified in the file.
-Make sure port 80 on the host is not already being in use.
-
-> ℹ️ **_INFO_**  
-> For compatibility purpose between `AMD64` and `ARM64` architecture, we use a MariaDB as database instead of MySQL.  
-> You still can use the MySQL image by uncommenting the following line in the Compose file   
-> `#image: mysql:8`
-
-## Deploy with docker compose
+## Architecture
 
 ```
-$ docker compose up -d
-Creating network "nginx-flask-mysql_default" with the default driver
-Pulling db (mysql:8.0.19)...
-5.7: Pulling from library/mysql
-...
-...
-WARNING: Image for service proxy was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.
-Creating nginx-flask-mysql_db_1 ... done
-Creating nginx-flask-mysql_backend_1 ... done
-Creating nginx-flask-mysql_proxy_1   ... done
+┌─────────────────┐
+│   TheHouseGuy   │  (Rails - consumes data)
+│   (Rails App)   │
+└────────┬────────┘
+         │ HTTP
+         ▼
+┌─────────────────┐
+│     Nginx       │  (Reverse Proxy)
+│   Port 80       │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐      ┌──────────────┐
+│  Flask Backend  │─────▶│   MariaDB    │
+│   Port 8000     │      │  (Listings)  │
+└────────┬────────┘      └──────────────┘
+         │
+         ▼
+┌─────────────────┐      ┌──────────────┐
+│ Celery Workers  │─────▶│    Redis     │
+│  (ETL Tasks)    │      │  (Broker)    │
+└─────────────────┘      └──────────────┘
 ```
 
-## Expected result
+**Components:**
+- **Flask API**: REST endpoints for listing data (port 8000)
+- **Nginx Proxy**: Front-facing reverse proxy (port 80)
+- **MariaDB**: Persistent storage for listings
+- **Redis**: Message broker for Celery tasks
+- **Celery Workers**: Async data ingestion and processing
 
-Listing containers should show three containers running and the port mapping as below:
-```
-$ docker compose ps
-NAME                          COMMAND                  SERVICE             STATUS              PORTS
-nginx-flask-mysql-backend-1   "flask run"              backend             running             0.0.0.0:8000->8000/tcp
-nginx-flask-mysql-db-1        "docker-entrypoint.s…"   db                  running (healthy)   3306/tcp, 33060/tcp
-nginx-flask-mysql-proxy-1     "nginx -g 'daemon of…"   proxy               running             0.0.0.0:80->80/tcp
+**Network Isolation:**
+- `frontnet`: proxy ↔ backend
+- `backnet`: backend ↔ database, Redis
+- Database not accessible from proxy layer
+
+## Technology Stack
+
+- **Python 3.12** - Latest stable Python
+- **Flask 3.1** - Web framework with app factory pattern
+- **SQLAlchemy 2.0** - ORM with type hints
+- **Alembic** - Database migrations
+- **Celery 5.4** - Distributed task queue
+- **Redis** - Message broker and cache
+- **Pydantic 2.x** - Data validation
+- **pytest** - Testing framework
+- **structlog** - Structured logging
+- **Docker Compose** - Local development environment
+
+## Quick Start
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Git
+
+### Run the Application
+
+```bash
+# Clone the repository
+git clone git@github.com:eckslopez/panchito.git
+cd panchito
+
+# Start all services
+docker compose up -d
+
+# Check service health
+curl http://localhost/api/v1/health
+
+# View logs
+docker compose logs -f backend
 ```
 
-After the application starts, navigate to `http://localhost:80` in your web browser or run:
-```
-$ curl localhost:80
-<div>Blog post #1</div><div>Blog post #2</div><div>Blog post #3</div><div>Blog post #4</div>
+### Verify Installation
+
+```bash
+# Health check
+curl http://localhost/api/v1/health
+# Expected: {"status": "healthy", "service": "panchito", "version": "1.0.0"}
+
+# Readiness check (includes database connectivity)
+curl http://localhost/api/v1/health/ready
+# Expected: {"status": "ready", "database": "connected"}
+
+# Listings API (empty initially)
+curl http://localhost/api/v1/listings
+# Expected: {"data": [], "meta": {"page": 1, "per_page": 50, "total": 0}}
 ```
 
-Stop and remove the containers
+## API Documentation
+
+### Base URL
+
+- **Local**: `http://localhost/api/v1`
+- **Backend Direct**: `http://localhost:8000/api/v1`
+
+### Endpoints
+
+#### Health Checks
+
 ```
-$ docker compose down
+GET /api/v1/health         # Basic health check
+GET /api/v1/health/ready   # Readiness probe (k8s)
+GET /api/v1/health/live    # Liveness probe (k8s)
 ```
+
+#### Listings (Coming in Phase 2)
+
+```
+GET /api/v1/listings              # List all listings (paginated)
+GET /api/v1/listings/{id}         # Get single listing
+GET /api/v1/stats                 # Ingestion statistics
+POST /api/v1/ingest/trigger       # Trigger ingestion job
+GET /api/v1/ingest/status/{job_id} # Check job status
+```
+
+**Query Parameters:**
+```
+?page=1&per_page=50
+?city=Los+Angeles&status=active
+?min_price=500000&max_price=1000000
+?sort_by=price&sort_order=desc
+```
+
+**Response Format:**
+```json
+{
+  "data": [...],
+  "meta": {
+    "page": 1,
+    "per_page": 50,
+    "total": 1234
+  }
+}
+```
+
+## Development
+
+### Project Structure
+
+```
+panchito/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py           # Flask app factory
+│   │   ├── config.py             # Environment configuration
+│   │   ├── models/               # SQLAlchemy models
+│   │   ├── api/v1/               # REST API endpoints
+│   │   ├── services/             # Business logic
+│   │   │   └── providers/        # Data source providers
+│   │   ├── tasks/                # Celery tasks
+│   │   ├── schemas/              # Pydantic validation
+│   │   └── utils/                # Logging, helpers
+│   ├── tests/                    # Test suite
+│   ├── data/datasets/            # Local CSV files (gitignored)
+│   ├── migrations/               # Alembic migrations
+│   ├── requirements.txt          # Production dependencies
+│   ├── requirements-dev.txt      # Dev dependencies
+│   ├── wsgi.py                   # App entrypoint
+│   └── Dockerfile
+├── proxy/
+│   ├── conf                      # Nginx configuration
+│   └── Dockerfile
+├── db/
+│   └── password.txt              # Database secret
+├── compose.yaml                  # Docker Compose config
+├── CLAUDE.md                     # Architecture guide for AI
+└── README.md                     # This file
+```
+
+### Development Workflow
+
+```bash
+# Rebuild after code changes
+docker compose up --build -d
+
+# View logs
+docker compose logs -f backend
+docker compose logs -f db
+
+# Run tests (once Phase 2 is complete)
+docker compose run --rm backend pytest
+
+# Stop services
+docker compose down
+
+# Stop and remove volumes
+docker compose down -v
+```
+
+### Environment Variables
+
+See `backend/.env.example` for all configuration options:
+
+- `FLASK_ENV` - development/production
+- `SECRET_KEY` - Flask secret key
+- `DB_HOST`, `DB_PORT`, `DB_NAME` - Database connection
+- `CELERY_BROKER_URL` - Redis connection
+- `LOG_LEVEL` - DEBUG/INFO/WARNING/ERROR
+
+### Database Migrations
+
+```bash
+# Initialize migrations (already done)
+docker compose exec backend flask db init
+
+# Create new migration
+docker compose exec backend flask db migrate -m "Description"
+
+# Apply migrations
+docker compose exec backend flask db upgrade
+
+# Rollback migration
+docker compose exec backend flask db downgrade
+```
+
+## Development Status
+
+### ✅ Phase 1: Foundation (Complete)
+
+- [x] Modern Flask 3.x app structure with app factory
+- [x] Environment-based configuration
+- [x] Structured logging with structlog
+- [x] Health check endpoints (k8s-ready)
+- [x] Docker Compose setup
+- [x] Database connectivity
+
+### 🔄 Phase 2: Core Data Model & API (In Progress)
+
+See [open issues](https://github.com/eckslopez/panchito/issues) for detailed task breakdown:
+
+- [ ] Pydantic validation schemas (#8)
+- [ ] SQLAlchemy listing model (#9)
+- [ ] Alembic migrations (#10)
+- [ ] Paginated listings API (#11)
+- [ ] Single listing endpoint (#12)
+- [ ] Error handling (#13)
+- [ ] Unit tests (#14)
+
+### 🔜 Phase 3: ETL Pipeline (Planned)
+
+- Provider abstraction pattern
+- CSV dataset ingestion
+- Data transformation service
+- Idempotency and deduplication
+- Error quarantine
+
+### 🔜 Phase 4: Async Tasks (Planned)
+
+- Celery worker configuration
+- Background ingestion jobs
+- Scheduled tasks (Celery Beat)
+- Job status tracking
+- Observability
+
+### 🔜 Phase 5: Testing & Quality (Planned)
+
+- Integration tests
+- Test fixtures and factories
+- >80% test coverage
+- GitHub Actions CI
+
+### 🔜 Phase 6: k8s & GitOps (Planned)
+
+- Kubernetes manifests
+- ArgoCD configuration
+- Graceful shutdown
+- Resource limits
+- 12-factor compliance
+
+## Deployment
+
+### Local Development (Current)
+
+Uses Docker Compose for local testing and development. All services run on localhost.
+
+### Production (Future)
+
+Will deploy to k3s cluster with:
+- ArgoCD for GitOps
+- Kubernetes manifests with kustomize/helm
+- Environment-specific configurations
+- Secrets management via sealed-secrets or external-secrets
+- Horizontal pod autoscaling for Celery workers
+
+## Contributing
+
+This is a personal learning project, but feedback and suggestions are welcome!
+
+1. Check [open issues](https://github.com/eckslopez/panchito/issues)
+2. Create a feature branch
+3. Write tests for new functionality
+4. Ensure tests pass and code is formatted
+5. Submit a pull request
+
+## Resources
+
+- **CLAUDE.md** - Architecture and development guide for Claude Code
+- **Issues** - https://github.com/eckslopez/panchito/issues
+- **TheHouseGuy** - https://github.com/eckslopez/thehouseguy (consumer app)
+
+## License
+
+MIT
+
+---
+
+**Part of the ZaveStudios Ecosystem** - Building real applications to demonstrate platform engineering excellence.

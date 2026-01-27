@@ -1,35 +1,44 @@
 # syntax=docker/dockerfile:1.4
-FROM --platform=$BUILDPLATFORM python:3.10-alpine AS builder
+FROM --platform=$BUILDPLATFORM python:3.12-alpine AS builder
 
-WORKDIR /code
-COPY requirements.txt /code
+WORKDIR /app
+
+# Install system dependencies for mysqlclient
+RUN apk add --no-cache \
+    mariadb-connector-c-dev \
+    gcc \
+    musl-dev
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt /app/
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip3 install -r requirements.txt
+    pip3 install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy application code
+COPY . /app/
 
-ENV FLASK_APP hello.py
-ENV FLASK_ENV development
-ENV FLASK_RUN_PORT 8000
-ENV FLASK_RUN_HOST 0.0.0.0
+# Environment variables
+ENV FLASK_ENV=development
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
+# Expose port
 EXPOSE 8000
 
-CMD ["flask", "run"]
+# Use gunicorn for production-ready serving
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "wsgi:app"]
 
+# Development stage with additional tools
 FROM builder AS dev-envs
 
-RUN <<EOF
-apk update
-apk add git
-EOF
+RUN apk add --no-cache git bash
 
-RUN <<EOF
-addgroup -S docker
-adduser -S --shell /bin/bash --ingroup docker vscode
-EOF
+# Create development user
+RUN addgroup -S docker && \
+    adduser -S --shell /bin/bash --ingroup docker vscode
 
-# install Docker tools (cli, buildx, compose)
+# Install Docker tools (cli, buildx, compose)
 COPY --from=gloursdocker/docker / /
 
-CMD ["flask", "run"]
+# For development, use Flask development server instead of gunicorn
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=8000"]

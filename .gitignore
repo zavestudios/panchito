@@ -97,3 +97,23 @@ ENV/
 
 # mypy
 .mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pycharm
+.idea/
+
+# VS Code
+.vscode/
+
+# pytest
+.pytest_cache/
+
+# Data and datasets
+backend/data/
+backend/migrations/versions/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3

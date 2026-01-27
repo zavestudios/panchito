@@ -29,6 +29,7 @@ services:
       context: backend
       target: builder
     restart: always
+    command: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=8000"]
     secrets:
       - db-password
     ports:
@@ -36,6 +37,16 @@ services:
     networks:
       - backnet
       - frontnet
+    environment:
+      - FLASK_APP=wsgi:app
+      - FLASK_ENV=development
+      - SECRET_KEY=dev-secret-key-for-local-development
+      - LOG_LEVEL=DEBUG
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=example
+      - DB_USER=root
+      - DB_PASSWORD_FILE=/run/secrets/db-password
     depends_on:
       db:
         condition: service_healthy
