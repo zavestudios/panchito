@@ -1,5 +1,5 @@
 ---
-title: "Docs"
+title: "Panchito"
 ---
 
 Work in progress.
