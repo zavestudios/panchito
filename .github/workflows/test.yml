@@ -1,0 +1,8 @@
+# panchito/.github/workflows/test.yml
+   name: Tests
+   on: [pull_request, push]
+   jobs:
+     test:
+       uses: eckslopez/platform-pipelines/.github/workflows/python-test.yml@main
+     lint:
+       uses: eckslopez/platform-pipelines/.github/workflows/python-lint.yml@main
