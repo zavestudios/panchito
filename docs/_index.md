@@ -1,5 +1,5 @@
 ---
-  title: "Docs"
+title: "Docs"
 ---
 
-  Work in progress.
+Work in progress.
