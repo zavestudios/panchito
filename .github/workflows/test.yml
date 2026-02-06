@@ -1,8 +1,10 @@
-# panchito/.github/workflows/test.yml
-   name: Tests
-   on: [pull_request, push]
-   jobs:
-     test:
-       uses: zavestudios/platform-pipelines/.github/workflows/python-test.yml@main
-     lint:
-       uses: zavestudios/platform-pipelines/.github/workflows/python-lint.yml@main
+name: Tests
+on: [pull_request, push]
+
+jobs:
+  test:
+    name: Tests
+    uses: zavestudios/platform-pipelines/.github/workflows/python-test.yml@main
+  lint:
+    name: Lint
+    uses: zavestudios/platform-pipelines/.github/workflows/python-lint.yml@main
