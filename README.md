@@ -6,7 +6,7 @@ Panchito is a Flask-based data ingestion and API service that serves as a "Press
 
 ## Purpose
 
-Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/eckslopez/thehouseguy) (Rails app) via REST API. It's designed to:
+Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/zavestudios/thehouseguy) (Rails app) via REST API. It's designed to:
 
 - Ingest data from multiple sources (CSV datasets, APIs, future: CRMLS)
 - Validate and normalize real estate listings
@@ -79,7 +79,7 @@ Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/ecks
 
 ```bash
 # Clone the repository
-git clone git@github.com:eckslopez/panchito.git
+git clone git@github.com:zavestudios/panchito.git
 cd panchito
 
 # Start all services
@@ -248,7 +248,7 @@ docker compose exec backend flask db downgrade
 
 ### 🔄 Phase 2: Core Data Model & API (In Progress)
 
-See [open issues](https://github.com/eckslopez/panchito/issues) for detailed task breakdown:
+See [open issues](https://github.com/zavestudios/panchito/issues) for detailed task breakdown:
 
 - [ ] Pydantic validation schemas (#8)
 - [ ] SQLAlchemy listing model (#9)
@@ -318,7 +318,7 @@ Will deploy to k3s cluster with:
 
 This is a personal learning project, but feedback and suggestions are welcome!
 
-1. Check [open issues](https://github.com/eckslopez/panchito/issues)
+1. Check [open issues](https://github.com/zavestudios/panchito/issues)
 2. Create a feature branch
 3. Write tests for new functionality
 4. Ensure tests pass and code is formatted
@@ -327,8 +327,8 @@ This is a personal learning project, but feedback and suggestions are welcome!
 ## Resources
 
 - **CLAUDE.md** - Architecture and development guide for Claude Code
-- **Issues** - https://github.com/eckslopez/panchito/issues
-- **TheHouseGuy** - https://github.com/eckslopez/thehouseguy (consumer app)
+- **Issues** - https://github.com/zavestudios/panchito/issues
+- **TheHouseGuy** - https://github.com/zavestudios/thehouseguy (consumer app)
 
 ## License
 
