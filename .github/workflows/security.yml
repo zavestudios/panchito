@@ -1,4 +1,4 @@
-name: Security
+name: Security Scan
 on:
   pull_request:
   push:
@@ -12,4 +12,5 @@ permissions:
 
 jobs:
   security:
+    name: Security Scan
     uses: zavestudios/platform-pipelines/.github/workflows/security-scan.yml@main
