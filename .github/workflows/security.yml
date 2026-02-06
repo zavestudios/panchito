@@ -12,4 +12,4 @@ permissions:
 
 jobs:
   security:
-    uses: eckslopez/platform-pipelines/.github/workflows/security-scan.yml@main
+    uses: zavestudios/platform-pipelines/.github/workflows/security-scan.yml@main
