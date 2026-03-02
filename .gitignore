@@ -69,3 +69,5 @@ backend/data/datasets/
 
 # Local agent notes
 CLAUDE.md
+AGENTS.md
+strict-audit

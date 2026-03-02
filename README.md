@@ -4,6 +4,12 @@
 
 Panchito is a Flask-based data ingestion and API service that serves as a "Pressure App" within the ZaveStudios ecosystem. It demonstrates production-ready Python development patterns including async task processing, data validation, and RESTful API design.
 
+Repository Category: `tenant` (see `platform-docs/_platform/REPO_TAXONOMY.md`)
+
+Documentation authority boundary:
+- This repository documents workload implementation and operations for this tenant.
+- Platform governance, lifecycle, and contract doctrine remain authoritative in `platform-docs/_platform/`.
+
 ## Purpose
 
 Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/zavestudios/thehouseguy) (Rails app) via REST API. It's designed to:
