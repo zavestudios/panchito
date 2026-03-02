@@ -25,6 +25,8 @@ def create_app(config_name='development'):
 
     # Load configuration
     app.config.from_object(config_by_name[config_name])
+    if config_name == 'production' and not app.config.get('SECRET_KEY'):
+        raise ValueError("SECRET_KEY environment variable must be set in production")
 
     # Setup logging
     setup_logging(app)

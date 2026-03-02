@@ -66,8 +66,6 @@ class ProductionConfig(Config):
 
     # Require secret key in production
     SECRET_KEY = os.getenv('SECRET_KEY')
-    if not SECRET_KEY:
-        raise ValueError("SECRET_KEY environment variable must be set in production")
 
 
 class TestingConfig(Config):

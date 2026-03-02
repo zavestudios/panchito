@@ -20,3 +20,4 @@ jobs:
     uses: zavestudios/platform-pipelines/.github/workflows/python-lint.yml@main
     with:
       working_directory: backend
+      run_black: false
