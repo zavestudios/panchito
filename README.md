@@ -74,19 +74,22 @@ Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/zave
 - **structlog** - Structured logging
 - **Docker Compose** - Local development environment
 
-## Quick Start
+## Local Development
 
 ### Prerequisites
 
 - Docker and Docker Compose
 - Git
 
-### Run the Application
+### Quick Start
 
 ```bash
 # Clone the repository
 git clone git@github.com:zavestudios/panchito.git
 cd panchito
+
+# Copy environment template
+cp .env.example .env
 
 # Start all services
 docker compose up -d

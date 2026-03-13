@@ -1,0 +1,8 @@
+apiVersion: zave.io/v1
+kind: Workload
+metadata:
+  name: panchito
+spec:
+  runtime: container
+  exposure: internal-http
+  delivery: rolling
