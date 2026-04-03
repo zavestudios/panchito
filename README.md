@@ -31,12 +31,6 @@ Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/zave
 └────────┬────────┘
          │ HTTP
          ▼
-┌─────────────────┐
-│     Nginx       │  (Reverse Proxy)
-│   Port 80       │
-└────────┬────────┘
-         │
-         ▼
 ┌─────────────────┐      ┌──────────────┐
 │  Flask Backend  │─────▶│   MariaDB    │
 │   Port 8000     │      │  (Listings)  │
@@ -51,15 +45,13 @@ Panchito feeds real estate listing data to [TheHouseGuy](https://github.com/zave
 
 **Components:**
 - **Flask API**: REST endpoints for listing data (port 8000)
-- **Nginx Proxy**: Front-facing reverse proxy (port 80)
 - **MariaDB**: Persistent storage for listings
 - **Redis**: Message broker for Celery tasks
 - **Celery Workers**: Async data ingestion and processing
 
 **Network Isolation:**
-- `frontnet`: proxy ↔ backend
 - `backnet`: backend ↔ database, Redis
-- Database not accessible from proxy layer
+- Database not accessible from the host-facing app port
 
 ## Technology Stack
 
@@ -91,29 +83,33 @@ cd panchito
 # Copy environment template
 cp .env.example .env
 
+# Edit local-only values in .env
+
 # Start all services
 docker compose up -d
 
 # Check service health
-curl http://localhost/api/v1/health
+curl http://localhost:8000/api/v1/health
 
 # View logs
 docker compose logs -f backend
 ```
 
+`.env.example` is a tracked template. Keep `.env` local and do not commit it.
+
 ### Verify Installation
 
 ```bash
 # Health check
-curl http://localhost/api/v1/health
+curl http://localhost:8000/api/v1/health
 # Expected: {"status": "healthy", "service": "panchito", "version": "1.0.0"}
 
 # Readiness check (includes database connectivity)
-curl http://localhost/api/v1/health/ready
+curl http://localhost:8000/api/v1/health/ready
 # Expected: {"status": "ready", "database": "connected"}
 
 # Listings API (empty initially)
-curl http://localhost/api/v1/listings
+curl http://localhost:8000/api/v1/listings
 # Expected: {"data": [], "meta": {"page": 1, "per_page": 50, "total": 0}}
 ```
 
@@ -121,8 +117,7 @@ curl http://localhost/api/v1/listings
 
 ### Base URL
 
-- **Local**: `http://localhost/api/v1`
-- **Backend Direct**: `http://localhost:8000/api/v1`
+- **Local**: `http://localhost:8000/api/v1`
 
 ### Endpoints
 
@@ -188,11 +183,8 @@ panchito/
 │   ├── requirements-dev.txt      # Dev dependencies
 │   ├── wsgi.py                   # App entrypoint
 │   └── Dockerfile
-├── proxy/
-│   ├── conf                      # Nginx configuration
-│   └── Dockerfile
 ├── db/
-│   └── password.txt              # Database secret
+│   └── password.txt.example      # Local dev secret template
 ├── compose.yaml                  # Docker Compose config
 ├── CLAUDE.md                     # Architecture guide for AI
 └── README.md                     # This file
@@ -220,7 +212,7 @@ docker compose down -v
 
 ### Environment Variables
 
-See `backend/.env.example` for all configuration options:
+See `.env.example` for local configuration options:
 
 - `FLASK_ENV` - development/production
 - `SECRET_KEY` - Flask secret key
