@@ -4,7 +4,8 @@ FROM --platform=$BUILDPLATFORM python:3.12-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache && \
+    apk add --no-cache \
     gcc \
     musl-dev \
     postgresql-dev
