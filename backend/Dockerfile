@@ -4,7 +4,8 @@ FROM --platform=$BUILDPLATFORM python:3.12-alpine AS builder
 WORKDIR /app
 
 # Install system dependencies for mysqlclient
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache && \
+    apk add --no-cache \
     mariadb-connector-c-dev \
     gcc \
     musl-dev
@@ -31,7 +32,8 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120",
 # Development stage with additional tools
 FROM builder AS dev-envs
 
-RUN apk add --no-cache git bash
+RUN apk upgrade --no-cache && \
+    apk add --no-cache git bash
 
 # Create development user
 RUN addgroup -S docker && \
