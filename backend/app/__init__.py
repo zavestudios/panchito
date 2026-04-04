@@ -1,9 +1,10 @@
 """Flask application factory."""
-from flask import Flask
+from flask import Flask, redirect, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
 
+from app.auth import auth_bp, init_oauth, login_required_path
 from app.config import config_by_name
 from app.utils.logging import setup_logging
 
@@ -35,10 +36,23 @@ def create_app(config_name='development'):
     db.init_app(app)
     migrate.init_app(app, db)
     CORS(app)
+    init_oauth(app)
 
     # Register blueprints
+    app.register_blueprint(auth_bp)
     from app.api.v1 import api_v1_bp
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
+
+    @app.before_request
+    def require_authenticated_session():
+        """Protect the app with Keycloak when OIDC is enabled."""
+        if not app.config.get("OIDC_ENABLED"):
+            return None
+        if not login_required_path(request.path):
+            return None
+        if session.get("user"):
+            return None
+        return redirect(url_for("auth.login", next=request.url))
 
     # Log startup
     app.logger.info(f"Panchito Flask app starting in {config_name} mode")

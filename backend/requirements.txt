@@ -33,3 +33,6 @@ structlog==25.1.0
 
 # WSGI server
 gunicorn==23.0.0
+
+# OIDC client
+Authlib==1.6.1
