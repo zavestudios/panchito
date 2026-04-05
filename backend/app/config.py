@@ -50,6 +50,19 @@ class Config:
     # Logging
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
+    # OIDC / Keycloak
+    OIDC_ENABLED = os.getenv('OIDC_ENABLED', 'false').lower() in {'1', 'true', 'yes', 'on'}
+    OIDC_ISSUER_URL = os.getenv('OIDC_ISSUER_URL')
+    OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID')
+    OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET')
+    OIDC_SCOPES = os.getenv('OIDC_SCOPES', 'openid profile email')
+    APP_BASE_URL = os.getenv('APP_BASE_URL')
+
+    # Session cookies
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() in {'1', 'true', 'yes', 'on'}
+
 
 class DevelopmentConfig(Config):
     """Development configuration."""
