@@ -43,7 +43,7 @@ def create_app(config_name='development'):
     init_oauth(app)
 
     # Register blueprints
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     from app.api.v1 import api_v1_bp
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
 
