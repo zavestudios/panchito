@@ -67,12 +67,34 @@ def login():
         session["post_login_redirect"] = next_url
 
     redirect_uri = url_for("auth.auth_callback", _external=True)
+
+    # DEBUG: Log session and cookie info before redirect
+    current_app.logger.info(f"[LOGIN] redirect_uri: {redirect_uri}")
+    current_app.logger.info(f"[LOGIN] session before redirect: {dict(session)}")
+    current_app.logger.info(f"[LOGIN] request.url: {request.url}")
+    current_app.logger.info(f"[LOGIN] request.host: {request.host}")
+    current_app.logger.info(f"[LOGIN] request.headers.get('Host'): {request.headers.get('Host')}")
+    current_app.logger.info(f"[LOGIN] request.headers.get('X-Forwarded-Host'): {request.headers.get('X-Forwarded-Host')}")
+    current_app.logger.info(f"[LOGIN] request.headers.get('X-Forwarded-Proto'): {request.headers.get('X-Forwarded-Proto')}")
+
     return oauth.keycloak.authorize_redirect(redirect_uri)
 
 
 @auth_bp.route("/callback")
 def auth_callback():
     """Exchange auth code for tokens and create the local app session."""
+    # DEBUG: Log session and cookie info on callback
+    current_app.logger.info(f"[CALLBACK] request.url: {request.url}")
+    current_app.logger.info(f"[CALLBACK] request.host: {request.host}")
+    current_app.logger.info(f"[CALLBACK] request.headers.get('Host'): {request.headers.get('Host')}")
+    current_app.logger.info(f"[CALLBACK] request.headers.get('X-Forwarded-Host'): {request.headers.get('X-Forwarded-Host')}")
+    current_app.logger.info(f"[CALLBACK] request.headers.get('X-Forwarded-Proto'): {request.headers.get('X-Forwarded-Proto')}")
+    current_app.logger.info(f"[CALLBACK] request.cookies: {dict(request.cookies)}")
+    current_app.logger.info(f"[CALLBACK] session before authorize_access_token: {dict(session)}")
+    current_app.logger.info(f"[CALLBACK] SESSION_COOKIE_SECURE: {current_app.config.get('SESSION_COOKIE_SECURE')}")
+    current_app.logger.info(f"[CALLBACK] SESSION_COOKIE_DOMAIN: {current_app.config.get('SESSION_COOKIE_DOMAIN')}")
+    current_app.logger.info(f"[CALLBACK] SESSION_COOKIE_SAMESITE: {current_app.config.get('SESSION_COOKIE_SAMESITE')}")
+
     token = oauth.keycloak.authorize_access_token()
     userinfo = token.get("userinfo") or oauth.keycloak.userinfo()
 
